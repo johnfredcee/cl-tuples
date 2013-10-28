@@ -11,16 +11,17 @@
   :version "1.0"
   :licence "MIT"
   :description "Experimental Tuple Types Facade"
-  :depends-on (:iterate)
+  :depends-on (:iterate :alexandria)
   :serial t
   :components ((:file "package")
 			   (:file "utils")
 			   (:file "symbols")
+			   (:file "syntax")
 			   (:file "tuple-expander")
 			   (:file "tuples")
 			   (:file "vector")
-			   (:file "quaternion")
 			   (:file "matrix")
+			   (:file "quaternion")
 			   (:file "colour")
 			   (:file "triangle")
 			   (:file "rect")

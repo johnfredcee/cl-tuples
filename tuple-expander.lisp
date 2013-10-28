@@ -21,7 +21,7 @@
 	   (list e (tuple-initial-element type-name) :type (tuple-element-type type-name))))
 
 (defparameter *tuple-expander-keywords*
-  '(:def-tuple-values
+  '(:def-tuple-values :def-tuple-key-values
 	:def-tuple-type :def-tuple-array-type
 	:def-tuple-struct
 	:def-tuple-getter
@@ -38,7 +38,9 @@
 	:def-tuple-array-dimensions 
 	:def-tuple-fill-pointer :def-tuple-setf-fill-pointer
 	:def-tuple-setf* :def-tuple-array-setf*
-	:def-tuple-array-setf))
+	:def-tuple-array-setf
+	:def-tuple-map
+	:def-tuple-reduce))
 
 (defgeneric tuple-symbol (type-name expansion))
 
@@ -54,6 +56,21 @@
   `(defmacro ,(tuple-symbol type-name expansion) (&rest elements)
 	 `(the ,',(construct-tuple-value-type type-name)
 		(values  ,@elements))))
+
+;; eg. (vector3d-key-values z 1.0 x 2.0) => #{ 2.0 0.0 1.0 }
+(defmethod tuple-symbol ((type-name symbol) (expansion (eql :def-tuple-key-values)))
+  (make-adorned-symbol type-name :suffix "KEY-VALUES" :asterisk NIL))
+
+;; create freshly initialised multiple values e.g. (vector3d-key-values z 1.0 x 2.0) => #{ 2.0 0.0 1.0 }
+(defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-key-values)))
+  `(defmacro ,(tuple-symbol type-name expansion)
+       (&key
+          (initial-element ,(tuple-initial-element type-name))
+          ,@(mapcar (lambda (element)
+                      `((,element ,element) initial-element))
+                    (tuple-elements type-name)))
+     `(,',(tuple-symbol type-name :def-tuple-values)
+       ,,@(tuple-elements type-name))))
 
 ;; deftype form for the multiple value equivalent of the struct
 ;; eg. (deftype vector3d* () `(values single-float single-float single-float))
@@ -111,7 +128,7 @@
 (defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-setter)))
   "Create a macro that will set an tuple place form to the values of a tuple value form"
   `(defmacro ,(tuple-symbol type-name :def-tuple-setter) (tuple-place tuple-values)
-	 (let* ((varlist (gensym-list ,(tuple-size type-name))))
+	 (let* ((varlist (make-gensym-list ,(tuple-size type-name))))
 	   `(multiple-value-bind
 			  ,varlist
 			,tuple-values
@@ -179,20 +196,15 @@
 
 (defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-aref*)))
   "Create a macro that will index an array that is considered to be an array of tuples and extract an individual tuple as a value form"
-  `(defmacro ,(tuple-symbol type-name :def-tuple-aref*) (tuple-array array-index)
-	 (let* ((varlist (gensym-list ,(tuple-size type-name)))
-			(array-index-sym (gensym))
-			(counter-sym (gensym)))
-	   `(let ((,array-index-sym (* ,',(tuple-size type-name) ,array-index)))
-		  (the ,',(tuple-typespec type-name)
-			(let ((,counter-sym 0))
-			  (values ,@(mapcar #'(lambda (x)
-									(declare (ignore x))
-									(prog1
-										   `(aref (the ,',(tuple-typespec** type-name) ,tuple-array)
-												  (the fixnum (+  ,counter-sym ,array-index-sym)))
-									  `(incf (the fixnum ,counter-sym))))
-								varlist))))))))
+  (let ((tuple-size (tuple-size type-name)))
+    `(defmacro ,(tuple-symbol type-name :def-tuple-aref*) (tuple-array array-index)
+       (let ((array-index-sym (gensym)))
+         `(let ((,array-index-sym (* ,',tuple-size ,array-index)))
+            (the ,',(tuple-typespec type-name)
+                 (values ,@(iterate
+                             (for counter below ,tuple-size)
+                             (collect `(aref (the ,',(tuple-typespec** type-name) ,tuple-array)
+                                             (the fixnum (+ ,counter ,array-index-sym))))))))))))
 
 ;; decided not to use this one..
 (defmethod tuple-symbol ((type-name symbol) (expansion (eql :def-nth-tuple)))
@@ -221,7 +233,7 @@
 (defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-aref-setter*)))
   "Create a macro that will set an indexed array of tuple places to the values of a tuple value form"
   `(defmacro ,(tuple-symbol type-name :def-tuple-aref-setter*) (array-name array-index tuple-values)
-	 (let* ((varlist (gensym-list ,(tuple-size type-name)))
+	 (let* ((varlist (make-gensym-list ,(tuple-size type-name)))
 			(array-index-sym (gensym)))
 	   `(let ((,array-index-sym (* ,',(tuple-size type-name) ,array-index)))
 		  (multiple-value-bind
@@ -321,7 +333,7 @@
 (defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-vector-push*)))
   "Create a macro that will push a tuple value form into an array of existing tuple places."
   `(defmacro ,(tuple-symbol type-name :def-tuple-vector-push*) (tuple-values array-name)
-	 (let* ((varlist (gensym-list ,(tuple-size type-name))))
+	 (let* ((varlist (make-gensym-list ,(tuple-size type-name))))
 	   `(progn 
 		  (multiple-value-bind
 				,varlist
@@ -340,7 +352,7 @@
 (defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-vector-push-extend*)))
   "Create a macro that will push a tuple value form into an array of existing tuple places, extending if adjustable."
   `(defmacro ,(tuple-symbol type-name :def-tuple-vector-push-extend*) (tuple-values array-name)
-	 (let* ((varlist (gensym-list ,(tuple-size type-name))))
+	 (let* ((varlist (make-gensym-list ,(tuple-size type-name))))
 	   `(progn 
 		  (multiple-value-bind
 			  ,varlist
@@ -449,7 +461,7 @@
 (defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-maker*)))
   "Create a macro that creates new tuple place, form and initialize it with values"
   `(defmacro ,(tuple-symbol type-name :def-tuple-maker*) (tuple-values)
-	 (let ((varlist (gensym-list ,(tuple-size type-name)))
+	 (let ((varlist (make-gensym-list ,(tuple-size type-name)))
 		   (tuple-sym (gensym))
 		   (counter-sym 0))
 	   (declare (type fixnum counter-sym))
@@ -466,6 +478,45 @@
 								   (incf counter-sym)))
 							 varlist)
 				   ,tuple-sym))))))
+
+;; eg. (vector2d-map* (+) #{1.0 2.0} #{4.0 5.0}) => #{5.0 7.0}
+;; or even (vector2d-map* (and) #{1.0 2.0} #{3.0 4.0}) => #{3.0 4.0}
+;; and (vector2d-map* ((lambda (a b) (funcall #'+ a b))) #{1.0 2.0} #{4.0 5.0}) => #{5.0 7.0}
+(defmethod tuple-symbol ((type-name symbol) (expansion (eql :def-tuple-map)))
+  (make-adorned-symbol type-name :suffix "MAP*" :asterisk NIL))
+
+(defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-map)))
+  `(defmacro ,(tuple-symbol type-name expansion) (operator &rest args)
+     (let* ((symbols
+              (mapcar (lambda (arg)
+                        (declare (ignore arg))
+                        (make-gensym-list ,(tuple-size type-name)))
+                      args))
+            (values
+              `(,',(tuple-symbol type-name :def-tuple-values)
+                ,@(iterate
+                    (for index below ,(tuple-size type-name))
+                    (collect `(,@operator ,@(mapcar (lambda (gensyms)
+                                                      (nth index gensyms))
+                                                    symbols)))))))
+       (iterate
+         (for arg in (reverse args))
+         (for gensyms in (reverse symbols))
+         (setf values `(,',(tuple-symbol type-name :def-with-tuple*)
+                        ,arg ,gensyms
+                        ,values)))
+       values)))
+
+;; eg. (vector3d-reduce* '+ #{1.0 2.0 3.0}) => 6.0
+(defmethod tuple-symbol ((type-name symbol) (expansion (eql :def-tuple-reduce)))
+  (make-adorned-symbol type-name :suffix "REDUCE*" :asterisk NIL))
+
+(defmethod tuple-expansion-fn ((type-name symbol) (expansion (eql :def-tuple-reduce)))
+  `(defmacro ,(tuple-symbol type-name expansion) (operator tuple)
+     (let ((symbols (make-gensym-list ,(tuple-size type-name))))
+       `(,',(tuple-symbol type-name :def-with-tuple*)
+         ,tuple ,symbols
+         (,@operator ,@symbols)))))
 
 
 ;; -- def-tuple-op expanders begin here ------------------------------------
@@ -513,21 +564,36 @@
 (defun arg-expander-fn-aux (n names types elements gensyms body)
   "Handle the expansion of the n-th parameter in a def-tuple-op call list. Names are the "
   (if (nth n types)
-	  ;; if it's a tuple type, bind to gensyms using the apropiate with-tuple macro
-	  (if (tuple-typep (nth n types))
-		  ``(,',(make-adorned-symbol (nth n types) :prefix "WITH" :asterisk t)
-				,,(nth n  names) ,',(nth n  gensyms)
-				,,(if (< (1+ n) (length names))
-					  (arg-expander-fn-aux (1+ n) names types elements gensyms body)
-					  (symbol-macro-expander-fn 0 names types elements gensyms body)))
-		  ;; otherwise just use a straight symbol
-		  ``(symbol-macrolet ((,',(nth n names) (the ,',(nth n types)  ,,(nth n names))))
-			  ,,(if (< (1+ n) (length names))
-					(arg-expander-fn-aux (1+ n) names types elements gensyms body)
-					(symbol-macro-expander-fn 0 names types elements gensyms body))))
-	  ;; if there are no associated parameters with this op, just expand the body
-	  (symbol-macro-expander-fn 0 nil nil nil nil body)))
+      ;; if it's a tuple type, bind to gensyms using the apropiate with-tuple macro
+      (if (tuple-typep (nth n types))
+          (if (< (1+ n) (length names))
+              (arg-expander-fn-aux (1+ n) names types elements gensyms body)
+              (symbol-macro-expander-fn 0 names types elements gensyms body))
+          ;; otherwise just use a straight symbol
+          ``(let ((,',(nth n names) (the ,',(nth n types) ,,(nth n names))))
+              ,,(if (< (1+ n) (length names))
+                    (arg-expander-fn-aux (1+ n) names types elements gensyms body)
+                    (symbol-macro-expander-fn 0 names types elements gensyms body))))
+      ;; if there are no associated parameters with this op, just expand the body
+      (symbol-macro-expander-fn 0 nil nil nil nil body)))
 
+(defun arg-expander-fn-aux-with (n names types elements gensyms body)
+  "Handle the tuple type case, expanding into -WITH macros.  The rest is
+handled by ARG-EXPANDER-FN-AUX in a separate step."
+  (if (nth n types)
+      ;; if it's a tuple type, bind to gensyms using the apropiate with-tuple macro
+      (if (tuple-typep (nth n types))
+          ``(,',(make-adorned-symbol (nth n types) :prefix "WITH" :asterisk t)
+             ,,(nth n  names) ,',(nth n  gensyms)
+             ,,(if (< (1+ n) (length names))
+                   (arg-expander-fn-aux-with (1+ n) names types elements gensyms body)
+                   (arg-expander-fn-aux 0 names types elements gensyms body)))
+          ;; otherwise just use a straight symbol
+          (if (< (1+ n) (length names))
+              (arg-expander-fn-aux-with (1+ n) names types elements gensyms body)
+              (arg-expander-fn-aux 0 names types elements gensyms body)))
+      ;; if there are no associated parameters with this op, just expand the body
+      (symbol-macro-expander-fn 0 nil nil nil nil body)))
 
 (defun body-expander-fn (names types elements gensyms body)
   "Expand the declarations and return type wrapper round a def-tuple-op. form"
@@ -544,12 +610,12 @@
 			(real-body (cddar body)))
 		;; when we have a parameter list, expand it
 		``(the ,',ret-type
-			,,(arg-expander-fn-aux 0 names types elements gensyms real-body)))
+			,,(arg-expander-fn-aux-with 0 names types elements gensyms real-body)))
 	  ;;         ;; otherwise splice in the quoted body
 	  ;;         ``(the ,',ret-type
 	  ;;             (progn ,@',real-body)))
 	  ;; no we havent specified a return type, just fall in
-	  (arg-expander-fn-aux 0 names types elements gensyms body)))
+	  (arg-expander-fn-aux-with 0 names types elements gensyms body)))
 
 (defun def-tuple-expander-fn (params types elements forms)
   "Helper function for def-tuple-op. Expands the arguments into a series of WITH-* forms so that
@@ -561,7 +627,7 @@
 	;; create a gensym for every tuple element - they are going to be symbol macros
 	(let ((gensyms
 		   (mapcar #'(lambda (element-list)
-					   (gensym-list (length element-list))) elements)))
+					   (make-gensym-list (length element-list))) elements)))
 	  ;; epand the body
 	  (body-expander-fn params types elements gensyms body))))
 

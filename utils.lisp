@@ -1,5 +1,3 @@
-
-
 (in-package :cl-tuples)
 
 ;; float that fits within range of x86 hardware register minus tag (rather sbcl oriented)
@@ -7,40 +5,8 @@
   #+sbcl `(single-float   (#.(- (expt 2f0 64))) (#.(expt 2f0 64)))
   #-sbcl single-float)
 
-;; to do -- alexandria has these anyway -- use that
-(defmacro with-gensyms ((&rest names) &body body)
-  "Classic macro for creating named unique symbols."
-  `(let ,(loop for n in names collect `(,n (gensym)))
-     ,@body))
-
-(defmacro once-only ((&rest names) &body body)
-  "Evaluate arguments once only in macro form body"
-  (let ((gensyms (loop for n in names collect (gensym))))
-    `(let (,@(loop for g in gensyms collect `(,g (gensym))))
-       `(let (,,@(loop for g in gensyms for n in names collect ``(,,g ,,n)))
-          ,(let (,@(loop for n in names for g in gensyms collect `(,n ,g)))
-             ,@body)))))
-
-;; define helper functions we will use
-
-(defun gensym-list (n)
-  "Give us a list of gensyms n elements long"
-  (loop
-     for index from 0 below n
-     collect (gensym)))
-
-(defun last-char (str)
-  (char str (1- (length str))))
-
-(defun symbol-to-string (sym)
-  "If the argument is a symbol or string, return it as a string."
-  (check-type sym (or symbol string))
-  (cond
-    ((symbolp sym)
-     (symbol-name sym))
-    ((stringp sym)
-     sym)))
-
+(defconstant fast-pi
+  #.(coerce pi 'fast-float))
 
 (defun make-adorned-symbol (name &key prefix suffix asterisk package)
   (check-type name (or string symbol))
@@ -59,26 +25,30 @@
                          (string "*")))
           (if package package *package*)))
 
-(defun make-suffixed-symbol (name suffix)
-  (make-adorned-symbol name :suffix suffix))
+(defmacro multiply-arguments (operator factor arguments)
+  `(,operator ,@(mapcar (lambda (argument) `(* ,factor ,argument)) arguments)))
 
-(defun make-prefixed-symbol (name prefix)
-  (make-adorned-symbol name :prefix prefix))
+(defun matrix-symbol (i j &optional (prefix '#:e))
+  (find-symbol (format NIL "~A~D~D" prefix i j)))
 
-(defun is-asterisk-symbol (s)
-  (let 
-	  ((ss (symbol-to-string s)))
-	(eql (aref ss (1- (length ss))) #\*)))
+(defun matrix-minor (x y length &optional (prefix '#:e))
+  (let ((symbol-prefix (format NIL "~A~D~:*~D" '#:matrix (1- length))))
+    `(,(find-symbol (concatenate 'string symbol-prefix #.(string '#:-determinant*)))
+      (,(find-symbol (concatenate 'string symbol-prefix #.(string '#:-values*)))
+       ,@(iterate values
+           (for i from 1 to length)
+           (iterate
+             (for j from 1 to length)
+             (unless (or (eql i x) (eql j y))
+               (in values (collect (matrix-symbol (1- i) (1- j) prefix))))))))))
 
-(defun make-element-names (elements type-name)
-  "Given a list of element names form a set of symbols of the form
-     <type-name>-<element-name> as used in struct elements."
-  (check-type elements symbol)
-  (check-type type-name symbol)
-  (mapcar #'(lambda (x)
-              (find-symbol
-               (concatenate 'string
-                            (symbol-name type-name) "-struct-"
-                            (symbol-name x))))
-          elements))
-
+(defun matrix-cofactors (length)
+  (iterate values
+    (for i from 1 to length)
+    (iterate
+      (for j from 1 to length)
+      (for value = (matrix-minor i j length))
+      (in values
+          (collect (if (oddp (+ i j))
+                       `(- ,value)
+                       value))))))

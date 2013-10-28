@@ -6,6 +6,10 @@
   "Create an alias for values for this tuple.eg (vector3d-values* 1.0 0.0 0.0) => #{ 1.0 0.0 0.0 }"
   (tuple-expansion-fn type-name :def-tuple-values))
 
+(defmacro def-tuple-key (type-name)
+  "Create an alias for values for this tuple.eg (vector3d-key-values z 1.0 x 2.0) => #{ 2.0 0.0 1.0 }"
+  (tuple-expansion-fn type-name :def-tuple-key-values))
+
 (defmacro def-tuple-typespec (type-name)
   "Create an alias typespec eg. (deftype vector3d* () `(values 'single-float 'single-float 'single-float))"
   (tuple-expansion-fn type-name :def-tuple-type))
@@ -107,6 +111,12 @@
   "Create generalised variable macros for an array of  tuples of type-name with the given elements."
   (tuple-expansion-fn type-name :def-tuple-array-setf))
 
+(defmacro def-tuple-map (type-name)
+  (tuple-expansion-fn type-name :def-tuple-map))
+
+(defmacro def-tuple-reduce (type-name)
+  (tuple-expansion-fn type-name :def-tuple-reduce))
+
 (defun document-tuple-type (type-name)
   `(progn
      ;; instead of setf, need some form that can use the symbol in the format
@@ -148,6 +158,7 @@
 (defmacro make-tuple-operations (type-name)
   `(progn
      (def-tuple ,type-name)
+     (def-tuple-key ,type-name)
 	 (def-tuple-struct ,type-name)
      (def-tuple-getter ,type-name)
      (def-tuple-aref* ,type-name)
@@ -171,7 +182,9 @@
      (def-tuple-array-maker ,type-name)
      (def-tuple-setf*  ,type-name)
      (def-tuple-array-setf*  ,type-name)
-	 (def-tuple-array-setf ,type-name)))
+     (def-tuple-array-setf ,type-name)
+     (def-tuple-map ,type-name)
+     (def-tuple-reduce ,type-name)))
 
 (defmacro export-tuple-operations (type-name)
   `(progn
@@ -203,11 +216,20 @@
    Within the forms the tuple value form is bound to the argument-name
    and the tuple elements are bound to the symbols in the element list"
   (let* ((param-names (mapcar #'car param-list))
-		 (param-typenames (mapcar #'cadr  param-list))
-		 (param-elements (mapcar #'caddr param-list))
-		 (doc (if (stringp (first forms))
-                 (first forms)
-                 (format nil "DEF-TUPLE-OP ~A ~A" name param-typenames))))
+         (param-typenames (mapcar #'cadr  param-list))
+         (param-elements (mapcar (lambda (param)
+                                   (let* ((type-name (cadr param))
+                                          (size (and (tuple-typep type-name) (tuple-size type-name)))
+                                          (elements (caddr param)))
+                                     (or
+                                      (if (eq elements :default)
+                                          (tuple-elements type-name)
+                                          elements)
+                                      (and size (make-gensym-list size)))))
+                                 param-list))
+         (doc (if (stringp (first forms))
+                  (first forms)
+                  (format nil "DEF-TUPLE-OP ~A ~A" name param-typenames))))
     `(defmacro ,name ,param-names
        ,doc
        ,(def-tuple-expander-fn param-names param-typenames param-elements forms))))
