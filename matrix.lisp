@@ -269,12 +269,12 @@
     ((rotation fast-float))
   "Return a matrix for rotating around the x axis."
   (:return matrix33
-           (let* ((sin (sin rotation))
-                  (-sin (- sin))
-                  (cos (cos rotation)))
+           (let* ((sin (coerce (sin rotation) 'fast-float))
+                  (neg-sin (coerce (- sin) 'fast-float))
+                  (cos (coerce (cos rotation) 'fast-float)))
              (matrix33-values*
               1.0 0.0 0.0
-              0.0 cos -sin
+              0.0 cos neg-sin
               0.0 sin cos))))
 
 (def-tuple-op rotatex-matrix44*

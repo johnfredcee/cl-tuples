@@ -21,12 +21,14 @@
 ;; vertices
 (def-tuple-type vertex2d
     :tuple-element-type fast-float
+	:initial-element 0.0f0
     :elements (x y w))
 
 (export-tuple-operations vertex3d)
 
 (def-tuple-type vertex3d
     :tuple-element-type fast-float
+	:initial-element 0.0f0
     :elements (x y z w))
 
 (export-tuple-operations vertex3d)

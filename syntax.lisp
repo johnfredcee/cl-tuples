@@ -8,6 +8,17 @@
   (declare (ignore char arg))
   `(values ,@(read-delimited-list #\} stream t)))
 
+(defun |#[-reader| (stream char arg)
+  (declare (ignore char arg))
+  (let ((form (read-delimited-list #\] stream t)))
+	(if (tuple-typep (car form))
+		(if (is-asterisk-symbol (car form))		
+			(let* ((form-str (symbol-name (car form)))
+				   (tuple-str (subseq form-str 0 (- (length form-str) 1))))
+			  `(,(make-adorned-symbol tuple-str :asterisk t :suffix "VALUES") ,@(cdr form)))
+			`(,(make-adorned-symbol (car form) :prefix "MAKE") ,@(cdr form)))		
+		(error "~A does not define a tuple type" (car form)))))
+
 (defvar *original-readtable* NIL)
 
 (defvar *restore-reader-syntax* NIL)
@@ -46,7 +57,9 @@
   (when (or (not save-original-p) *original-readtable*)
     (setf *readtable* (copy-readtable))
     (set-dispatch-macro-character #\# #\{ #'|#{-reader|)
-    (set-macro-character #\} (get-macro-character #\) nil)))
+	(set-dispatch-macro-character #\# #\[ #'|#[-reader|)
+    (set-macro-character #\} (get-macro-character #\) nil))
+	(set-macro-character #\] (get-macro-character #\) nil)))
   (values))
 
 (defmacro restore-tuples-syntax-state ()
