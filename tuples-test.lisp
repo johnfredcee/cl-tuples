@@ -231,30 +231,40 @@
 
 
 (deftest test-matrices ()
-  (let* 
-	  ((vector0 (make-vector3d 0.0 0.0 0.0))
-	   (vector1 (make-vector3d 1.0 1.0 1.0))
-	   (vertex0 (make-vertex3d* (vector3d-vertex3d* (vector3d*  vector0))))
-	   (vertex1 (make-vertex3d* (vector3d-vertex3d* (vector3d* vector1))))
-	   (vertexx (make-vertex3d 1.0 0.0 0.0 1.0))
-	   (vertexy (make-vertex3d 0.0 1.0 0.0 1.0))
-	   (vertexz (make-vertex3d 0.0 0.0 1.0 0.0)))
-	(check
-	 (equalp 
-	 (multiple-value-list 
-	  (vector3d-difference*  (vector3d-values* 0.0 0.0 0.0) (vector3d-values* 1.0 1.0 1.0))) '(-1.0 -1.0 -1.0))
-	 (=== (vertex3d-distance* (vertex3d* vertex0) (vertex3d* vertex1))
-		  1.7320508)
 	 (flet ((torad (x) (coerce (* x (/ FAST-PI 180.0)) 'fast-float)))
-	   (let ((rotatexccw (make-matrix44* (rotatex-matrix44* 90.0)))
-			 (rotatexcw  (make-matrix44* (rotatex-matrix44* (torad -90.0)))))
-		 (check (=== (multiple-value-list 
-					  (transform-vertex3d* 
-					   (rotatex-matrix44* (matrix44* rotatexccw)) 
-					   (transform-vertex3d* 
-						(matrix44* rotatexcw) 
-						(vertex3d-values*  0.0 0.0 1.0 1.0)))) 
-					 '(0.0 0.0 1.0 1.0))))))))
+	   (let* ((rotatexccw (make-matrix44* (rotatex-matrix44* (torad 90.0))))
+			  (rotatexcw  (make-matrix44* (rotatex-matrix44* (torad -90.0))))		 
+			  (vector0 (make-vector3d 0.0 0.0 0.0))
+			  (vector1 (make-vector3d 1.0 1.0 1.0))
+			  (vertex0 (make-vertex3d* (vector3d-vertex3d* (vector3d*  vector0))))
+			  (vertex1 (make-vertex3d* (vector3d-vertex3d* (vector3d* vector1)))))
+		 (check
+		   (equalp 
+			(multiple-value-list 
+			 (vector3d-difference*  (vector3d-values* 0.0 0.0 0.0) (vector3d-values* 1.0 1.0 1.0))) '(-1.0 -1.0 -1.0))
+		   (=== (vertex3d-distance* (vertex3d* vertex0) (vertex3d* vertex1))
+				1.7320508)
+		   (=== (let ((result (multiple-value-list 
+							   (transform-vertex3d* 
+								(rotatex-matrix44* (matrix44* rotatexccw)) 
+								(transform-vertex3d* 
+								 (matrix44* rotatexcw) 
+								 (vertex3d-values*  0.0 0.0 1.0 1.0))))))
+				  (format t "~A~%" result)
+				  result)
+				'(0.0 0.0 1.0 1.0))))))
+
+;; (flet ((torad (x) (coerce (* x (/ FAST-PI 180.0)) 'fast-float)))
+;;   (let* ((rotatexccw (make-matrix44* (rotatex-matrix44* (torad 90.0))))
+;; 		 (rotatexcw  (make-matrix44* (rotatex-matrix44* (torad -90.0)))))		 
+;; 		 (result (multiple-value-list 
+;; 				  (transform-vertex3d* 
+;; 				   (rotatex-matrix44* (matrix44* rotatexccw)) 
+;; 				   (transform-vertex3d* 
+;; 					(matrix44* rotatexcw) 
+;; 					(vertex3d-values*  0.0 0.0 1.0 1.0))))))
+;; 	(format t "~A~%" result)
+;; 	result))
 
 ;; ;; check expander functions and with functions
 ;; (flet ((torad (x) (coerce (* x (/ FAST-PI 180.0)) 'fast-float)))
