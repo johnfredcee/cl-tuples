@@ -246,7 +246,7 @@
 				1.7320508)
 		   (=== (let ((result (multiple-value-list 
 							   (transform-vertex3d* 
-								(rotatex-matrix44* (matrix44* rotatexccw)) 
+								(matrix44* rotatexccw)
 								(transform-vertex3d* 
 								 (matrix44* rotatexcw) 
 								 (vertex3d-values*  0.0 0.0 1.0 1.0))))))
