@@ -3,7 +3,7 @@
 ;; float that fits within range of x86 hardware register minus tag (rather sbcl oriented)
 (deftype fast-float () 
   #+sbcl `(single-float   (#.(- (expt 2f0 63))) (#.(expt 2f0 63)))
-  #-sbcl single-float)
+  #-sbcl 'single-float)
 
 (defconstant fast-pi
   #.(coerce pi 'fast-float))
