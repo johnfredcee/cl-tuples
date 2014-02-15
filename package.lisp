@@ -81,6 +81,8 @@
            matrix44-matrix33*
            matrix33-matrix44*
 
+           angle-axis-matrix33*
+
            quaternion-sum*
            quaternion-normalize*
            quaternion-scale*
