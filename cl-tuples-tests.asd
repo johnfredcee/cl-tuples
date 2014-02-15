@@ -7,7 +7,8 @@
   :version "1.0"
   :licence "MIT"
   :depends-on (:cl-tuples :alexandria :fiveam)
-  :components ((:module "test"
+  :components ((:module "tests"
                 :components ((:file "package")
                              (:file "suite")
+                             (:file "primitives")
                              (:file "quaternion")))))
