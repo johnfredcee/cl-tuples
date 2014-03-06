@@ -419,22 +419,12 @@
 (def-tuple-op matrix44-determinant*
     ((mat matrix44 #.(tuple-elements 'matrix44)))
   (:return fast-float
-           (let ((t0 (* e00 e22))
-                 (t1 (* e11 e33))
-                 (t2 (* e01 e23))
-                 (t3 (* e12 e30))
-                 (t4 (* e03 e21))
-                 (t5 (* e10 e32))
-                 (t6 (* e13 e31))
-                 (t7 (* e02 e20)))
-             (- (+ (* t0 t1)
-                   (* t2 t3)
-                   (* t7 t6)
-                   (* t4 t5))
-                (* t3 t4)
-                (* t7 t1)
-                (* t2 t5)
-                (* t0 t6)))))
+           (+ (- (* e03 e12 e21 e30) (* e02 e13 e21 e30) (* e03 e11 e22 e30)) (* e01 e13 e22 e30)
+              (- (* e02 e11 e23 e30) (* e01 e12 e23 e30) (* e03 e12 e20 e31)) (* e02 e13 e20 e31)
+              (- (* e03 e10 e22 e31) (* e00 e13 e22 e31) (* e02 e10 e23 e31)) (* e00 e12 e23 e31)
+              (- (* e03 e11 e20 e32) (* e01 e13 e20 e32) (* e03 e10 e21 e32)) (* e00 e13 e21 e32)
+              (- (* e01 e10 e23 e32) (* e00 e11 e23 e32) (* e02 e11 e20 e33)) (* e01 e12 e20 e33)
+              (- (* e02 e10 e21 e33) (* e00 e12 e21 e33) (* e01 e10 e22 e33)) (* e00 e11 e22 e33))))
 
 (def-tuple-op matrix22-scale*
     ((x fast-float)
