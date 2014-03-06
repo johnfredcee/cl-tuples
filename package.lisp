@@ -202,6 +202,9 @@
            nth-vector2d
            nth-vector3d
            nth-vertex3d
+           print-matrix22*
+           print-matrix33*
+           print-matrix44*
            quaternion
            quaternion*
            quaternion-aref
