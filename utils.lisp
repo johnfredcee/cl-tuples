@@ -51,12 +51,12 @@ with some string, and optionally an added asterisk"
 
 (defun matrix-symbol (i j &optional (prefix '#:e))
   "Construct a symbol that will represent an elemnet of a matrix."
-  (find-symbol (format NIL "~A~D~D" prefix i j)))
+  (find-symbol (format NIL "~A~D~D" prefix i j) #.(find-package '#:cl-tuples)))
 
 (defun matrix-minor (x y length &optional (prefix '#:e))
   (let ((symbol-prefix (format NIL "~A~D~:*~D" '#:matrix (1- length))))
-    `(,(find-symbol (concatenate 'string symbol-prefix #.(string '#:-determinant*)))
-      (,(find-symbol (concatenate 'string symbol-prefix #.(string '#:-values*)))
+    `(,(find-symbol (concatenate 'string symbol-prefix #.(string '#:-determinant*)) #.(find-package '#:cl-tuples))
+      (,(find-symbol (concatenate 'string symbol-prefix #.(string '#:-values*)) #.(find-package '#:cl-tuples))
        ,@(iterate values
            (for i from 1 to length)
            (iterate
