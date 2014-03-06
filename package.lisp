@@ -70,6 +70,7 @@
            fast-float
            fast-pi
            file-enable-tuples-syntax
+           *float-print-format*
            height
            identity-matrix44*
            inverted-matrix22*
