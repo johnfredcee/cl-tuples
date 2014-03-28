@@ -16,7 +16,7 @@
   `(values ,@(loop for i from 0 below (tuple-size type-name) collect (tuple-element-type type-name))))
 
 (defun construct-tuple-slots (type-name)
-  "Given a tuple type return a list of slots sutable for the body of a defstruct body eg: ((A 0.0 :TYPE SINGLE-FLOAT) (B 0.0 :TYPE SINGLE-FLOAT))"
+  "Given a tuple type return a list of slots sutable for the body of a defstruct body eg: ((A 0.0f0 :TYPE SINGLE-FLOAT) (B 0.0f0 :TYPE SINGLE-FLOAT))"
   (loop for e in (tuple-elements type-name)
 	 collect
 	   (list e (tuple-initial-element type-name) :type (tuple-element-type type-name))))
@@ -366,7 +366,7 @@
 		  (the fixnum (/  (the fixnum (fill-pointer ,array-name)) (the fixnum ,',(tuple-size type-name))))))))
 
 ;; -- bindings --
-;; bind tuple vector to symbols during evaluation of the form eg (with-vector3d #( 1.0 2.0 3.0 ) (x y z) (fomat t "~A" (list x y z)))
+;; bind tuple vector to symbols during evaluation of the form eg (with-vector3d #( 1.0 2.0 3.0 ) (x y z) (format t "~A" (list x y z)))
 (defmethod tuple-symbol ((type-name symbol) (expansion (eql :def-with-tuple)))
   (make-adorned-symbol type-name :prefix "WITH"))
 
@@ -386,7 +386,7 @@
 		 (declare (ignorable ,@element-syms) (type ,',(tuple-element-type type-name) ,@element-syms))
 		 (progn ,@forms))))
 
-;; bind tuple values to symbols during evaluation of the form eg (with-vector3d* #{ 1.0 2.0 3.0 } (x y z) (fomat t "~A" (list x y z)))
+;; bind tuple values to symbols during evaluation of the form eg (with-vector3d* #{ 1.0 2.0 3.0 } (x y z) (format t "~A" (list x y z)))
 (defmethod tuple-symbol ((type-name symbol) (expansion (eql :def-with-tuple*)))
   (make-adorned-symbol type-name :prefix "WITH" :asterisk t))
 
@@ -401,7 +401,7 @@
 		(progn ,@forms))))
 
 
-;; bind tuple array elements to symbols during evaluation of the form eg (with-vector3d-aref (vecs 2 (x y z)) (fomat t "~A" (list x y z)))
+;; bind tuple array elements to symbols during evaluation of the form eg (with-vector3d-aref (vecs 2 (x y z)) (format t "~A" (list x y z)))
 (defmethod tuple-symbol ((type-name symbol) (expansion (eql :def-with-tuple-aref)))
   (make-adorned-symbol type-name :prefix "WITH" :suffix "AREF" ))
 

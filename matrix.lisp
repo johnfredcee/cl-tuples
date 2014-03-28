@@ -212,25 +212,25 @@
     ()
   (:return matrix22
            (matrix22-key-values
-            e00 1.0
-            e11 1.0)))
+            e00 1.0f0
+            e11 1.0f0)))
 
 (def-tuple-op identity-matrix33*
     ()
   (:return matrix33
            (matrix33-key-values
-            e00 1.0
-            e11 1.0
-            e22 1.0)))
+            e00 1.0f0
+            e11 1.0f0
+            e22 1.0f0)))
 
 (def-tuple-op identity-matrix44*
     ()
   (:return matrix44
            (matrix44-key-values
-            e00 1.0
-            e11 1.0
-            e22 1.0
-            e33 1.0)))
+            e00 1.0f0
+            e11 1.0f0
+            e22 1.0f0
+            e33 1.0f0)))
 
 (def-tuple-op translation-matrix44*
 	((tx fast-float)
@@ -253,7 +253,7 @@
             e00 sx
             e11 sy
             e22 sz
-            e33 1.0)))
+            e33 1.0f0)))
 
 (def-tuple-op vertex3d-translation-matrix44*
 	((vert vertex3d (tx ty tz tw)))
@@ -273,9 +273,9 @@
                   (-sin (- sin))
                   (cos (cos rotation)))
              (matrix33-values*
-              1.0 0.0 0.0
-              0.0 cos -sin
-              0.0 sin cos))))
+              1.0f0 0.0f0 0.0f0
+              0.0f0  cos  -sin
+              0.0f0  sin   cos))))
 
 (def-tuple-op rotatex-matrix44*
     ((rotation fast-float))
@@ -293,9 +293,9 @@
                   (-sin (- sin))
                   (cos (cos rotation)))
              (matrix33-values*
-              cos  0.0 sin
-              0.0  1.0 0.0
-              -sin 0.0 cos))))
+               cos  0.0f0  sin
+              0.0f0 1.0f0 0.0f0
+              -sin  0.0f0  cos))))
 
 
 (def-tuple-op rotatey-matrix44*
@@ -313,9 +313,9 @@
                   (-sin (- sin))
                   (cos (cos rotation)))
              (matrix33-values*
-              cos -sin 0.0
-              sin cos  0.0
-              0.0 0.0  1.0))))
+              cos -sin 0.0f0
+              sin cos  0.0f0
+              0.0f0 0.0f0  1.0f0))))
 
 
 (def-tuple-op rotatez-matrix44*
