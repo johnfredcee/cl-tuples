@@ -187,16 +187,16 @@
 
 ;; test the vectors
 
-(defparameter *v2d* (make-vector2d* #[ vector2d* 1.0 2.0 ]))
+(defparameter *v2d* (make-vector2d* #[ vector2d* 1.0f0 2.0f0 ]))
 ;; ;; basic vector math
-(defparameter *vector0* (make-vector3d* #[ vector3d* 0.0 0.0 0.0 ] ))
-(defparameter *vector1* (make-vector3d* #[ vector3d* 1.0 1.0 1.0 ] ))
-(defparameter *vectorx* (make-vector3d* #[ vector3d* 1.0 0.0 0.0 ] ))
-(defparameter *vectory* (make-vector3d* #[ vector3d* 0.0 1.0 0.0 ] ))
-(defparameter *vectorz* (make-vector3d* #[ vector3d* 0.0 0.0 1.0 ] ))
+(defparameter *vector0* (make-vector3d* #[ vector3d* 0.0f0 0.0f0 0.0f0 ] ))
+(defparameter *vector1* (make-vector3d* #[ vector3d* 1.0f0 1.0f0 1.0f0 ] ))
+(defparameter *vectorx* (make-vector3d* #[ vector3d* 1.0f0 0.0f0 0.0f0 ] ))
+(defparameter *vectory* (make-vector3d* #[ vector3d* 0.0f0 1.0f0 0.0f0 ] ))
+(defparameter *vectorz* (make-vector3d* #[ vector3d* 0.0f0 0.0f0 1.0f0 ] ))
 (defparameter *test-vector* (new-vector3d))
 
-(defun === (x y &optional (epsilon 0.00001))
+(defun === (x y &optional (epsilon 1f-5))
   "Approx == for a pair or pair of lists of numbers"
   (flet ((compare (x y)
 		   (< (abs (- x y)) epsilon)))
@@ -209,66 +209,64 @@
 
 (deftest test-vectors ()
   (check
-	(equalp (multiple-value-list
-			 (cl-tuples::vector2d-scale* (vector2d* *v2d*) 0.5)) '( 0.5 1.0  ))
-  (=== 0.0 (vector3d-length* (vector3d* *vector0*)))
-  (=== (sqrt 3.0) (vector3d-length* (vector3d* *vector1*)))
-  (equalp 
-   (multiple-value-list
-	(vector3d-normal* (vector3d* *vector1*))) '(0.57735026 0.57735026 0.57735026))
-  (equalp 
-   (multiple-value-list
-	(vector3d-cross* (vector3d* *vectorx*) (vector3d* *vectory*))) '(0.0 0.0 1.0))
-  (===
-   (vector3d-dot* (vector3d* *vectorx*) (vector3d-normal* (vector3d* *vector1*)))
-   0.57735026))
-  (===
-   (vector3d-length* (vector3d* *vector1*))
-   (sqrt 3)))
+   (equalp (multiple-value-list (cl-tuples::vector2d-scale* (vector2d* *v2d*) 0.5f0))
+           '( 0.5f0 1.0f0 ))
+   (=== 0.0f0 (vector3d-length* (vector3d* *vector0*)))
+   (=== (sqrt 3.0f0) (vector3d-length* (vector3d* *vector1*)))
+   (equalp (multiple-value-list (vector3d-normal* (vector3d* *vector1*)))
+           '(0.57735026f0 0.57735026f0 0.57735026f0))
+   (equalp (multiple-value-list (vector3d-cross* (vector3d* *vectorx*) (vector3d* *vectory*)))
+           '(0.0f0 0.0f0 1.0f0))
+   (=== (vector3d-dot* (vector3d* *vectorx*) (vector3d-normal* (vector3d* *vector1*)))
+        0.57735026f0)
+   (=== (vector3d-length* (vector3d* *vector1*))
+        (sqrt 3))))
 
 
 (test-vectors)
 
 
 (deftest test-matrices ()
-	 (flet ((torad (x) (coerce (* x (/ FAST-PI 180.0)) 'fast-float)))
-	   (let* ((rotatexccw (make-matrix44* (rotatex-matrix44* (torad 90.0))))
-			  (rotatexcw  (make-matrix44* (rotatex-matrix44* (torad -90.0))))		 
-			  (vector0 (make-vector3d 0.0 0.0 0.0))
-			  (vector1 (make-vector3d 1.0 1.0 1.0))
+	 (flet ((torad (x) (coerce (* x (/ FAST-PI 180f0)) 'fast-float)))
+	   (let* ((rotatexccw (make-matrix44* (rotatex-matrix44* (torad 90f0))))
+			  (rotatexcw  (make-matrix44* (rotatex-matrix44* (torad -90f0))))		 
+			  (vector0 (make-vector3d 0.0f0 0.0f0 0.0f0))
+			  (vector1 (make-vector3d 1.0f0 1.0f0 1.0f0))
 			  (vertex0 (make-vertex3d* (vector3d-vertex3d* (vector3d*  vector0))))
 			  (vertex1 (make-vertex3d* (vector3d-vertex3d* (vector3d* vector1)))))
 		 (check
 		   (equalp 
 			(multiple-value-list 
-			 (vector3d-difference*  (vector3d-values* 0.0 0.0 0.0) (vector3d-values* 1.0 1.0 1.0))) '(-1.0 -1.0 -1.0))
+			 (vector3d-difference*
+                          (vector3d-values* 0.0f0 0.0f0 0.0f0) (vector3d-values* 1.0f0 1.0f0 1.0f0)))
+                        '(-1.0f0 -1.0f0 -1.0f0))
 		   (=== (vertex3d-distance* (vertex3d* vertex0) (vertex3d* vertex1))
-				1.7320508)
+				1.7320508f0)
 		   (=== (let ((result (multiple-value-list 
 							   (transform-vertex3d* 
 								(matrix44* rotatexccw)
 								(transform-vertex3d* 
 								 (matrix44* rotatexcw) 
-								 (vertex3d-values*  0.0 0.0 1.0 1.0))))))
+								 (vertex3d-values*  0.0f0 0.0f0 1.0f0 1.0f0))))))
 				  (format t "~A~%" result)
 				  result)
-				'(0.0 0.0 1.0 1.0))))))
+				'(0.0f0 0.0f0 1.0f0 1.0f0))))))
 
-;; (flet ((torad (x) (coerce (* x (/ FAST-PI 180.0)) 'fast-float)))
-;;   (let* ((rotatexccw (make-matrix44* (rotatex-matrix44* (torad 90.0))))
-;; 		 (rotatexcw  (make-matrix44* (rotatex-matrix44* (torad -90.0)))))		 
+;; (flet ((torad (x) (coerce (* x (/ FAST-PI 180f0)) 'fast-float)))
+;;   (let* ((rotatexccw (make-matrix44* (rotatex-matrix44* (torad 90f0))))
+;; 		 (rotatexcw  (make-matrix44* (rotatex-matrix44* (torad -90f0)))))		 
 ;; 		 (result (multiple-value-list 
 ;; 				  (transform-vertex3d* 
 ;; 				   (rotatex-matrix44* (matrix44* rotatexccw)) 
 ;; 				   (transform-vertex3d* 
 ;; 					(matrix44* rotatexcw) 
-;; 					(vertex3d-values*  0.0 0.0 1.0 1.0))))))
+;; 					(vertex3d-values*  0.0f0 0.0f0 1.0f0 1.0f0))))))
 ;; 	(format t "~A~%" result)
 ;; 	result))
 
 ;; ;; check expander functions and with functions
-;; (flet ((torad (x) (coerce (* x (/ FAST-PI 180.0)) 'fast-float)))
-;;   (rotatex-matrix44* (the fast-float (torad 90.0))))
+;; (flet ((torad (x) (coerce (* x (/ FAST-PI 180f0)) 'fast-float)))
+;;   (rotatex-matrix44* (the fast-float (torad 90f0))))
 	 
 (test-matrices)
 
@@ -283,21 +281,21 @@
 
 ;; (defparameter *vertex0* (make-vertex3d (vector3d-vertex3d (vector3d  *vector0*))))
 ;; (defparameter *vertex1* (make-vertex3d (vector3d-vertex3d (vector3d  *vector1*))))
-;; (defparameter *vertexx* (make-vertex3d #{1.0 0.0 0.0 1.0}))
-;; (defparameter *vertexy* (make-vertex3d #{0.0 1.0 0.0 1.0}))
-;; (defparameter *vertexz* (make-vertex3d #{0.0 0.0 1.0 0.0}))
+;; (defparameter *vertexx* (make-vertex3d #{1.0f0 0.0f0 0.0f0 1.0f0}))
+;; (defparameter *vertexy* (make-vertex3d #{0.0f0 1.0f0 0.0f0 1.0f0}))
+;; (defparameter *vertexz* (make-vertex3d #{0.0f0 0.0f0 1.0f0 0.0f0}))
 
 ;; (with-test *result*
-;;   (equalp *test-vector* #(1.0 1.0 1.0))
+;;   (equalp *test-vector* #(1.0f0 1.0f0 1.0f0))
 ;;   (setf *test-vector* (make-vector3d (delta-vector3d  (vertex3d  *vertex0*)  (vertex3d *vertex1*)))))
 
 ;; (with-test *result*
-;;   (= *result* 1.7320508)
+;;   (= *result* 1.7320508f0)
 ;;   (setf *result*
 ;; 		(vertex3d-distance (vertex3d  *vertex0*) (vertex3d  *vertex1*))))
 
 
-;; (defun torad (x) (coerce  (* x (/ PI 180.0)) 'single-float))
+;; (defun torad (x) (coerce  (* x (/ PI 180f0)) 'single-float))
 
 ;; ;; basic matrix math
 ;; (defparameter *rotatex* (make-matrix44 (rotatex-matrix44 (torad 90))))
@@ -364,25 +362,25 @@
 
 ;; ;;*test stanza*
 ;; (defparameter *test-camera* (make-instance 'camera))
-;; (setf (up-of *test-camera*) #{ 0.0 0.0 0.0 })
+;; (setf (up-of *test-camera*) #{ 0.0f0 0.0f0 0.0f0 })
 ;; (up-of *test-camera*)
-;; (setf (up-of *test-camera*) #{ 1.0 2.0 3.0 })
-;; (setf (vertices-of *test-camera* 3) #{ 2.0 3.0 -2.5 1.0 })
+;; (setf (up-of *test-camera*) #{ 1.0f0 2.0f0 3.0f0 })
+;; (setf (vertices-of *test-camera* 3) #{ 2.0f0 3.0f0 -2.5f0 1.0f0 })
 ;; (vertices-of *test-camera* 3)
 ;; (vertices-of *test-camera* 4)
 ;; (vertices-of *test-camera* 1)
 
 ;; (defparameter *test-shape* (make-vector3d-array 4))
 
-;; (setf (vector3d-aref *test-shape* 0) (vector3d* 3.14 0.0 3.14))
-;; (setf (vector3d-aref *test-shape* 1) (vector3d* 3.14 0.0 -3.14))
-;; (setf (vector3d-aref *test-shape* 2) (vector3d* -3.14 0.0 -3.14))
-;; (setf (vector3d-aref *test-shape* 3) (vector3d* -3.14 0.0 3.14))
+;; (setf (vector3d-aref *test-shape* 0) (vector3d* 3.14f0 0.0f0 3.14f0))
+;; (setf (vector3d-aref *test-shape* 1) (vector3d* 3.14f0 0.0f0 -3.14f0))
+;; (setf (vector3d-aref *test-shape* 2) (vector3d* -3.14f0 0.0f0 -3.14f0))
+;; (setf (vector3d-aref *test-shape* 3) (vector3d* -3.14f0 0.0f0 3.14f0))
 
 
 ;; (defparameter *test-quaternion* (make-quaternion
 ;; 								 (angle-axis-quaternion
-;; 								  (angle-axis* 0.0 1.0 0.0 (/ 3.14 2.0)))))
+;; 								  (angle-axis* 0.0f0 1.0f0 0.0f0 (/ 3.14f0 2.0f0)))))
 
 
 ;; (defparameter *test-matrix*
