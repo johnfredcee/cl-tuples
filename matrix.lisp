@@ -172,16 +172,27 @@
 			  e01 e11 e21
 			  e02 e12 e22)))
 
+(defvar *float-print-format* "~8,3F")
+
+(def-tuple-op print-matrix22*
+    ((stream stream)
+     (mat matrix22 #1=#.(tuple-elements 'matrix22)))
+  "Print a 2x2 matrix in a useful format."
+  (:return (values (or null string))
+           (format stream
+                   (apply #'format NIL "~A ~A~~%~A ~A"
+                          (make-list 4 :initial-element +float-print-format+))
+                   . #1#)))
+
 (def-tuple-op print-matrix33*
-	((mat matrix44 (e00 e01 e02 e03
-						e10 e11 e12 e13
-						e20 e21 e22 e23
-						e30 e31 e32 e33)))
+    ((stream stream)
+     (mat matrix33 #1=#.(tuple-elements 'matrix33)))
   "Print a 3x3 matrix in a useful format."
-  (:return (values)
-		   (format t "~A ~A ~A ~A ~%" e00 e01 e02)
-		   (format t "~A ~A ~A ~A ~%" e10 e11 e12)
-		   (format t "~A ~A ~A ~A ~%" e20 e21 e22)))
+  (:return (values (or null string))
+           (format stream
+                   (apply #'format NIL "~A ~A ~A~~%~A ~A ~A~~%~A ~A ~A"
+                          (make-list 9 :initial-element +float-print-format+))
+                   . #1#)))
 
 (def-tuple-op matrix44-product*
 	((m0 matrix44 (e000 e001 e002 e003 e010 e011 e012 e013  e020 e021 e022 e023  e030 e031 e032 e033))
@@ -349,19 +360,15 @@
 			9.0f0  10.0f0 11.0f0 12.0f0
 			13.0f0 14.0f0 15.0f0 16.0f0)))
 
-
 (def-tuple-op print-matrix44*
-	((mat matrix44 (e00 e01 e02 e03
-						e10 e11 e12 e13
-						e20 e21 e22 e23
-						e30 e31 e32 e33)))
-  "Print a matrix in a useful format."
-  (:return (values)
-		   (format t "~A ~A ~A ~A ~%" e00 e01 e02 e03)
-		   (format t "~A ~A ~A ~A ~%" e10 e11 e12 e13)
-		   (format t "~A ~A ~A ~A ~%" e20 e21 e22 e23)
-		   (format t "~A ~A ~A ~A ~%" e30 e31 e32 e33)))
-
+    ((stream stream)
+     (mat matrix44 #1=#.(tuple-elements 'matrix44)))
+  "Print a 4x4 matrix in a useful format."
+  (:return (values (or null string))
+           (format stream
+                   (apply #'format NIL "~A ~A ~A ~A~~%~A ~A ~A ~A~~%~A ~A ~A ~A~~%~A ~A ~A ~A"
+                          (make-list 16 :initial-element +float-print-format+))
+                   . #1#)))
 
 (def-tuple-op matrix44-matrix33*
 	((mat44 matrix44
@@ -419,22 +426,12 @@
 (def-tuple-op matrix44-determinant*
     ((mat matrix44 #.(tuple-elements 'matrix44)))
   (:return fast-float
-           (let ((t0 (* e00 e22))
-                 (t1 (* e11 e33))
-                 (t2 (* e01 e23))
-                 (t3 (* e12 e30))
-                 (t4 (* e03 e21))
-                 (t5 (* e10 e32))
-                 (t6 (* e13 e31))
-                 (t7 (* e02 e20)))
-             (- (+ (* t0 t1)
-                   (* t2 t3)
-                   (* t7 t6)
-                   (* t4 t5))
-                (* t3 t4)
-                (* t7 t1)
-                (* t2 t5)
-                (* t0 t6)))))
+           (+ (- (* e03 e12 e21 e30) (* e02 e13 e21 e30) (* e03 e11 e22 e30)) (* e01 e13 e22 e30)
+              (- (* e02 e11 e23 e30) (* e01 e12 e23 e30) (* e03 e12 e20 e31)) (* e02 e13 e20 e31)
+              (- (* e03 e10 e22 e31) (* e00 e13 e22 e31) (* e02 e10 e23 e31)) (* e00 e12 e23 e31)
+              (- (* e03 e11 e20 e32) (* e01 e13 e20 e32) (* e03 e10 e21 e32)) (* e00 e13 e21 e32)
+              (- (* e01 e10 e23 e32) (* e00 e11 e23 e32) (* e02 e11 e20 e33)) (* e01 e12 e20 e33)
+              (- (* e02 e10 e21 e33) (* e00 e12 e21 e33) (* e01 e10 e22 e33)) (* e00 e11 e22 e33))))
 
 (def-tuple-op matrix22-scale*
     ((x fast-float)
@@ -452,11 +449,9 @@
   (:return matrix44 (multiply-arguments matrix44-values* x #1#)))
 
 (def-tuple-op cofactor-matrix22*
-    ((mat matrix22 #.(tuple-elements 'matrix22)))
+    ((mat matrix22 #1=#.(tuple-elements 'matrix22)))
   (:return matrix22
-           (matrix22-values*
-            e11 e10
-            e01 e00)))
+           (matrix22-values* . #1#)))
 
 (def-tuple-op cofactor-matrix33*
     ((mat matrix33 #.(tuple-elements 'matrix33)))
