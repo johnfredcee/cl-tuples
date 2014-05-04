@@ -70,7 +70,7 @@
 (def-tuple-op vector2d-vertex2d*
     ((vec vector2d (x y)))
   (:return vertex3d
-           (vertex3d-values* x y 1.0)))
+           (vertex3d-values* x y 1.0f0)))
 
 (def-tuple-op vertex2d-vector2d*
     ((vert vertex2d (x y w)))
@@ -119,7 +119,7 @@
 (def-tuple-op vector3d-vertex3d*
     ((vec vector3d (x y z)))
   (:return vertex3d
-           (vertex3d-values* x y z 1.0)))
+           (vertex3d-values* x y z 1.0f0)))
 
 (def-tuple-op vertex3d-vector3d*
     ((vert vertex3d (x y z w)))
