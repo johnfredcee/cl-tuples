@@ -23,9 +23,9 @@
             (matrix33-scale*
              (sin a)
              #1=(matrix33-values*
-                0.0 (- z) y
-                z 0.0 (- x)
-                (- y) x 0.0))
+                0.0f0 (- z) y
+                z 0.0f0 (- x)
+                (- y) x 0.0f0))
             (matrix33-scale*
              (- 1 (cos a))
              (matrix33-product*
@@ -51,12 +51,12 @@
   (:return angle-axis
            (let* ((trace (matrix33-trace* m))
                   (angle (acos (/ (1- trace) 2))))
-             (declare (type (single-float -1.0 3.0) trace)
-                      (type (single-float 0.0 #.fast-pi)))
+             (declare (type (single-float -1.0f0 3.0f0) trace)
+                      (type (single-float 0.0f0 #.fast-pi)))
              (cond
-               ((= angle 0.0)
+               ((= angle 0.0f0)
                 (angle-axis-key-values))
-               ((< 0.0 angle fast-pi)
+               ((< 0.0f0 angle fast-pi)
                 (vector3d-angle-axis*
                  (vector3d-normal*
                   (vector3d-values*
@@ -226,7 +226,7 @@
     ((aa angle-axis (x y z a)))
   "Convert an angle-axis tuple to a quaternion tuple"
   (:return quaternion
-           (let* ((a/2 (* 0.5 a))
+           (let* ((a/2 (* 0.5f0 a))
                   (sin-angle (sin a/2)))
              (quaternion-values*
               (* x sin-angle)
@@ -240,8 +240,8 @@
 zero, the axis isn't defined, so the unit x vector is returned instead."
   (:return angle-axis
            ;; either test for one, disable traps, or catch the exception
-           (if (or (= w 1.0) (= w -1.0))
-               (angle-axis-key-values x 1.0)
+           (if (or (= w 1.0f0) (= w -1.0f0))
+               (angle-axis-key-values x 1.0f0)
                (let ((angle (* 2 (acos w))))
                  (vector3d-angle-axis*
                   (vector3d-scale*
@@ -267,4 +267,4 @@ zero, the axis isn't defined, so the unit x vector is returned instead."
     ((vector vector3d (vx vy vz)))
   "Convert a 3d vector into q auqt for angular velocity purposes"
   (:return quaternion
-           (quaternion-values* vx vy vz 0.0)))
+           (quaternion-values* vx vy vz 0.0f0)))
