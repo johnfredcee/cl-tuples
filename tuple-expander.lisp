@@ -201,6 +201,7 @@
     `(defmacro ,(tuple-symbol type-name :def-tuple-aref*) (tuple-array array-index)
        (let ((array-index-sym (gensym)))
          `(let ((,array-index-sym (* ,',tuple-size ,array-index)))
+            (declare (type fixnum ,array-index-sym))
             (the ,',(tuple-typespec type-name)
                  (values ,@(iterate
                              (for counter below ,tuple-size)
@@ -237,6 +238,7 @@
 	 (let* ((varlist (make-gensym-list ,(tuple-size type-name)))
 			(array-index-sym (gensym)))
 	   `(let ((,array-index-sym (* ,',(tuple-size type-name) ,array-index)))
+	      (declare (type fixnum ,array-index-sym))
 		  (multiple-value-bind
 				,varlist
 			  ,tuple-values
@@ -245,7 +247,7 @@
 						   (mapcar #'(lambda (x)
 									   (prog1
 										   `(setf (aref (the ,',(tuple-typespec** type-name) ,array-name)
-														(the fixnum (+ (the fixnum ,counter) (the fixnum ,array-index-sym)))) 
+														(the fixnum (+ (the fixnum ,counter) ,array-index-sym)))
 												  (the ,',(tuple-element-type type-name) ,x))
 										 (incf counter)))
 								   varlist))))))))
